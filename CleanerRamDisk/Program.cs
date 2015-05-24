@@ -25,7 +25,7 @@ namespace CleanerRamDisk
 	}
 
 	public class AppContext : ApplicationContext
-	{
+	{ // some comment
 		[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool GetDiskFreeSpaceEx(string lpDirectoryName,
