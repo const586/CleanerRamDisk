@@ -128,6 +128,7 @@ namespace CleanerRamDisk
 				}
 			}
 			count++;
+            T_Tick(null, null);
 		}
 
 		private void CloseClick(object sender, EventArgs e)
