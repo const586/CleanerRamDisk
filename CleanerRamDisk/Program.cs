@@ -35,6 +35,7 @@ namespace CleanerRamDisk
 		private readonly NotifyIcon _ni;
 		private const string PROGRAMM_NAME = "CleanerRAMDisk";
 		private int count = 0;
+	    private FileSystemWatcher _watcher;
         public AppContext()
 		{
 			_ni = new NotifyIcon {
@@ -56,7 +57,11 @@ namespace CleanerRamDisk
 			t.Tick += T_Tick;
 			t.Start();
 			T_Tick(null, null);
-        }
+            if (!string.IsNullOrEmpty(Settings.Default.CleanPath))
+            {
+                CreateWatcher();
+            }
+		}
         private void UpdateTitle(ulong free)
         {
             _ni.Text = $"{PROGRAMM_NAME}:{free}MiB:{count}";
@@ -92,6 +97,13 @@ namespace CleanerRamDisk
 		{
 			if (string.IsNullOrEmpty(Settings.Default.CleanPath))
 				return;
+		    if (_watcher != null && _watcher.Path != Settings.Default.CleanPath)
+		    {
+		        _watcher.Created -= WatcherOnCreated;
+		        _watcher.Dispose();
+                CreateWatcher();
+            }
+               
 			DirectoryInfo info = new DirectoryInfo(Settings.Default.CleanPath);
 			ulong free;
 			ulong total;
@@ -103,14 +115,28 @@ namespace CleanerRamDisk
             UpdateTitle((free / 1024 / 1024));
 		}
 
-		private void Clean(DirectoryInfo dir)
+	    private void CreateWatcher()
+	    {
+            _watcher = new FileSystemWatcher(Settings.Default.CleanPath);
+            _watcher.Created += WatcherOnCreated;
+            _watcher.IncludeSubdirectories = true;
+            _watcher.EnableRaisingEvents = true;
+        }
+	    private void WatcherOnCreated(object sender, FileSystemEventArgs fileSystemEventArgs)
+	    {
+	        T_Tick(sender, null);
+	    }
+
+	    private void Clean(DirectoryInfo dir)
 		{
 			var files = dir.GetFiles("*", SearchOption.AllDirectories);
 			foreach (var f in files)
 			{
 				try
 				{
-					f.Delete();
+				    if (Settings.Default.FileReserved != null && Settings.Default.FileReserved.Contains(f.FullName))
+				        continue;
+                    f.Delete();
 				} catch (Exception)
 				{
 
@@ -121,6 +147,7 @@ namespace CleanerRamDisk
 			{
 				try
 				{
+                    
 					d.Delete();
 				} catch (Exception)
 				{
