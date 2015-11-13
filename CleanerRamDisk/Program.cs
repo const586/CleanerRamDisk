@@ -130,11 +130,19 @@ namespace CleanerRamDisk
 	    private void Clean(DirectoryInfo dir)
 		{
 			var files = dir.GetFiles("*", SearchOption.AllDirectories);
-			foreach (var f in files)
+	        List<string> reserved = new List<string>();
+	        if (Settings.Default.FileReserved != null)
+            {
+                foreach (var pattern in Settings.Default.FileReserved)
+                {
+                    reserved.AddRange(from s in dir.GetFiles(pattern, SearchOption.AllDirectories) select s.Name);
+                }
+            }
+            foreach (var f in files)
 			{
 				try
 				{
-				    if (Settings.Default.FileReserved != null && Settings.Default.FileReserved.Contains(f.FullName))
+				    if (reserved.Contains(f.Name))
 				        continue;
                     f.Delete();
 				} catch (Exception)

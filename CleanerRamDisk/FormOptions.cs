@@ -5,10 +5,13 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BotInterface.Utils;
+using BotInterface.Utils.Forms;
 
 namespace CleanerRamDisk
 {
@@ -53,19 +56,20 @@ namespace CleanerRamDisk
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.ShowReadOnly = true;
-            dialog.ReadOnlyChecked = true;
-            dialog.CheckFileExists = false;
-            dialog.ValidateNames = false;
-            dialog.InitialDirectory = Settings.Default.CleanPath;
-            if (dialog.ShowDialog() == DialogResult.OK && !listReserv.Items.Contains(dialog.FileName))
-            {
-                listReserv.Items.Add(dialog.FileName);
-            }
+            string value = string.Empty;
+            if (InputBox.ShowDialog("Имя файла(ов)", "Введите имя файла", ref value, ch => true, Description))
+                listReserv.Items.Add(value);
         }
 
-        private void btnDel_Click(object sender, EventArgs e)
+	    private string Description(string text)
+	    {
+	        if (string.IsNullOrEmpty(Settings.Default.CleanPath) || !Directory.Exists(Settings.Default.CleanPath))
+	            return string.Empty;
+	        var files = Directory.GetFiles(Settings.Default.CleanPath, text, SearchOption.AllDirectories);
+	        return files.FirstOrDefault() ?? string.Empty;
+	    }
+
+	    private void btnDel_Click(object sender, EventArgs e)
         {
             if (listReserv.SelectedIndex < 0)
                 return;
